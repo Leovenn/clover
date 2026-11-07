@@ -10,20 +10,33 @@ Use several Claude Code accounts on one Mac, side by side, without mixing them u
 
 ## Requirements
 
-- macOS 26 or later, Apple Silicon
+- **macOS 26 (Tahoe) or later**
+- **Apple Silicon only** (M1 or newer). Intel Macs are not supported.
 - [Claude Code](https://code.claude.com/docs/en/setup)
-- Xcode Command Line Tools (`xcode-select --install`), to build
 
 ## Install
 
-```sh
-git clone https://github.com/Leovenn/clover.git
-cd clover
-make install
-open /Applications/Clover.app
-```
+1. Download `Clover-<version>-macos-arm64.zip` from [Releases](https://github.com/Leovenn/clover/releases) and unzip it.
+2. Move `Clover.app` to Applications.
+3. Clover isn't notarized by Apple, so macOS blocks it the first time. Clear the download flag once, then open it:
 
-`make install` puts `Clover.app` in Applications and links `~/.local/bin/cl`. Make sure `~/.local/bin` is on your `PATH`.
+   ```sh
+   xattr -dr com.apple.quarantine /Applications/Clover.app
+   open /Applications/Clover.app
+   ```
+
+4. Put the `cl` command on your `PATH`:
+
+   ```sh
+   mkdir -p ~/.local/bin
+   ln -sf /Applications/Clover.app/Contents/MacOS/cl ~/.local/bin/cl
+   ```
+
+   Any directory on your `PATH` works. The link follows the app when you update it.
+
+To check the download, compare it with the `.sha256` file from the release: `shasum -a 256 -c Clover-<version>-macos-arm64.zip.sha256`.
+
+To update, replace `Clover.app` in Applications with the new one.
 
 ## Usage
 

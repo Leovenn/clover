@@ -10,20 +10,33 @@
 
 ## 系统要求
 
-- macOS 26 或更高版本，Apple Silicon
+- **macOS 26（Tahoe）或更高版本**
+- **仅支持 Apple Silicon**（M1 及以后的芯片），不支持 Intel Mac
 - [Claude Code](https://code.claude.com/docs/en/setup)
-- Xcode Command Line Tools（`xcode-select --install`），用于编译
 
 ## 安装
 
-```sh
-git clone https://github.com/Leovenn/clover.git
-cd clover
-make install
-open /Applications/Clover.app
-```
+1. 从 [Releases](https://github.com/Leovenn/clover/releases) 下载 `Clover-<版本>-macos-arm64.zip` 并解压。
+2. 把 `Clover.app` 移到「应用程序」文件夹。
+3. Clover 没有经过苹果公证，第一次打开时会被 macOS 拦下。先清除一次下载标记，再打开：
 
-`make install` 会把 `Clover.app` 放进「应用程序」，并创建 `~/.local/bin/cl`。请确认 `~/.local/bin` 在你的 `PATH` 里。
+   ```sh
+   xattr -dr com.apple.quarantine /Applications/Clover.app
+   open /Applications/Clover.app
+   ```
+
+4. 把 `cl` 命令放到 `PATH` 上：
+
+   ```sh
+   mkdir -p ~/.local/bin
+   ln -sf /Applications/Clover.app/Contents/MacOS/cl ~/.local/bin/cl
+   ```
+
+   `PATH` 里的任何目录都可以。之后更新 App 时，这个链接会自动指向新版本。
+
+如果想校验下载的文件，可以和发布页里的 `.sha256` 文件比对：`shasum -a 256 -c Clover-<版本>-macos-arm64.zip.sha256`。
+
+更新时，用新的 `Clover.app` 替换「应用程序」里的旧版即可。
 
 ## 使用
 

@@ -49,13 +49,10 @@ final class StatusItemController: NSObject {
     private static let glyph: NSImage = {
         let image = NSImage(size: NSSize(width: 18, height: 18), flipped: false) { rect in
             guard let ctx = NSGraphicsContext.current?.cgContext else { return false }
-            let art = rect.insetBy(dx: 0.5, dy: 0.5)
-            ctx.addPath(CloverShape.leaves(in: art))
-            ctx.fillPath()
-            ctx.addPath(CloverShape.stem(in: art))
-            ctx.setLineWidth(art.width * CloverShape.stemWidth * 1.6)
-            ctx.setLineCap(.round)
-            ctx.strokePath()
+            for part in CloverShape.parts(in: rect.insetBy(dx: 1, dy: 1)) {
+                ctx.addPath(part)
+                ctx.fillPath()
+            }
             return true
         }
         image.isTemplate = true
