@@ -4,9 +4,27 @@
 
 Use several Claude Code accounts on one Mac, side by side, without mixing them up. `cl` starts Claude Code as the account you pick, and a menu bar panel shows every account's usage.
 
-- **Fully isolated.** Each account has its own login, conversations, settings, skills and MCP servers. Several accounts can run at the same time, even in the same folder.
-- **Never touches your login.** Clover doesn't read, store or refresh tokens, and it sends no requests of its own. Logging in, renewing and checking usage are all done by the official `claude`.
-- **Nothing in the way.** `cl` hands the terminal straight to `claude`, and every argument reaches it unchanged.
+## Why Clover
+
+**Simple.** Five everyday commands: `cl`, `cl run`, `cl add`, `cl rm`, `cl ls`, plus `cl uninstall`. Everything else, from logging in and resuming to MCP and plugins, is the official `claude`, because `cl` passes every argument through unchanged.
+
+**No side effects.**
+- Each account is fully isolated: its own login, conversations, settings, skills and MCP servers. Several can run at once, even in the same folder.
+- Your existing `~/.claude` is left exactly as it is, and Clover never writes any of Claude Code's files.
+- No token is read, stored or refreshed, and Clover sends no requests of its own. Logins and usage checks go through the official `claude`.
+- No daemon, no background polling, no changes to your shell profile. Clover keeps no data of its own beyond what macOS stores for any app, and `cl uninstall` removes everything it added.
+
+**Small.**
+
+| | Measured |
+| --- | --- |
+| Download | 815 KB (app 1.6 MB) |
+| Memory | about 25 MB |
+| CPU with the panel closed | about 0% |
+| Time `cl` adds before Claude Code starts | about 7 ms; then it *becomes* `claude`, leaving no process behind |
+| Usage refresh | only when you open the panel, at most once a minute, no tokens used |
+
+Measured on an Apple Silicon Mac with macOS 26.7, two accounts.
 
 ## Requirements
 
