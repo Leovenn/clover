@@ -32,7 +32,8 @@ public struct ClaudeConfig: Sendable {
     public init(contentsOf url: URL) {
         let raw = (try? Data(contentsOf: url)).flatMap { try? JSONDecoder().decode(Raw.self, from: $0) }
         identity = raw?.oauthAccount.map {
-            Identity(uuid: $0.accountUuid, email: $0.emailAddress ?? "", plan: $0.organizationType.map(Self.planName))
+            Identity(uuid: $0.accountUuid, email: $0.emailAddress ?? "",
+                     plan: Self.planName(organizationType: $0.organizationType, billingType: $0.billingType))
         }
         usesAPIKey = raw?.primaryApiKey != nil
         quota = raw?.cachedUsageUtilization.flatMap { cache in
@@ -43,8 +44,11 @@ public struct ClaudeConfig: Sendable {
         }
     }
 
-    /// "claude_max" → "Max".
-    static func planName(_ type: String) -> String {
+    /// "claude_max" → "Max". The organization type outlives the subscription, so an account
+    /// billed "none" has lapsed to Free whatever its organization says.
+    static func planName(organizationType: String?, billingType: String?) -> String? {
+        if billingType == "none" { return "Free" }
+        guard let type = organizationType else { return nil }
         let name = type.hasPrefix("claude_") ? String(type.dropFirst("claude_".count)) : type
         return name.prefix(1).uppercased() + name.dropFirst()
     }
@@ -57,6 +61,7 @@ private struct Raw: Decodable {
         let accountUuid: String
         let emailAddress: String?
         let organizationType: String?
+        let billingType: String?
     }
 
     struct Cache: Decodable {

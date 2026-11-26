@@ -85,6 +85,14 @@ struct Sandbox {
         #expect(config.isLoggedIn)
     }
 
+    @Test func aLapsedSubscriptionIsFree() throws {
+        let box = Sandbox()
+        try box.write("""
+        {"oauthAccount": {"accountUuid": "u1", "organizationType": "claude_pro", "billingType": "none"}}
+        """, to: "c.json")
+        #expect(ClaudeConfig(contentsOf: box.root.appending(path: "c.json")).identity?.plan == "Free")
+    }
+
     @Test func ignoresQuotaOfAnotherAccount() throws {
         let box = Sandbox()
         try box.write("""

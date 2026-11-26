@@ -1,11 +1,14 @@
 import AppKit
 import SwiftUI
 
-/// The menu bar panel: when the readings were taken, then one row per account. Beyond four
-/// accounts the list stops growing and scrolls.
+/// The menu bar panel: when the readings were taken, then one row per account. The list's
+/// height follows the number of accounts, never their contents, so a refresh that adds or
+/// drops a line cannot resize the panel; what does not fit scrolls. Beyond three accounts
+/// the list stops growing.
 struct PanelView: View {
     let model: AppModel
-    private static let maxVisibleRows = 4, scrollHeight: CGFloat = 560
+    /// About one account with both quota windows.
+    private static let maxVisibleRows = 3, rowHeight: CGFloat = 124
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
@@ -17,10 +20,9 @@ struct PanelView: View {
             if model.rows.isEmpty {
                 notice("还没有账号。登录 ~/.claude，或在终端运行 cl add <名称>")
             }
-            if model.rows.count > Self.maxVisibleRows {
-                ScrollView { list }.frame(height: Self.scrollHeight)
-            } else {
-                list
+            if !model.rows.isEmpty {
+                ScrollView { list }
+                    .frame(height: CGFloat(min(model.rows.count, Self.maxVisibleRows)) * Self.rowHeight)
             }
         }
         .frame(width: 340)

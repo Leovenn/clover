@@ -103,9 +103,20 @@ private struct QuotaWindow: View {
                     Spacer()
                     Text(resetText).font(.caption).foregroundStyle(.secondary)
                 }
-                ProgressView(value: min(percent, 100), total: 100).tint(tint)
+                bar.padding(.top, 5)
             }
         }
+    }
+
+    /// Drawn rather than a ProgressView, which shows an accent-colored nub at 0% whatever the tint.
+    private var bar: some View {
+        Capsule().fill(.quaternary)
+            .frame(height: 6)
+            .overlay(alignment: .leading) {
+                GeometryReader { geo in
+                    Capsule().fill(tint).frame(width: geo.size.width * min(percent, 100) / 100)
+                }
+            }
     }
 
     /// When the running window resets. A window without a reset time has not started: it
