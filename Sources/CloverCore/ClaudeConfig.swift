@@ -45,7 +45,8 @@ public struct ClaudeConfig: Sendable {
     }
 
     /// "claude_max" → "Max". The organization type outlives the subscription, so an account
-    /// billed "none" has lapsed to Free whatever its organization says.
+    /// billed "none" has lapsed to Free whatever its organization says. This profile is only
+    /// refetched now and then, so it can predate an upgrade: `AuthStatus` comes first.
     static func planName(organizationType: String?, billingType: String?) -> String? {
         if billingType == "none" { return "Free" }
         guard let type = organizationType else { return nil }

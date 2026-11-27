@@ -3,7 +3,8 @@ import Foundation
 import Observation
 
 /// What the panel shows. Everything is read from disk on each opening; quotas are refreshed
-/// through Claude Code when the panel opens, at most once a minute per account.
+/// through Claude Code when the panel opens, at most once a minute per account. Plans rarely
+/// change, so they are asked once per Claude account after launch and on each manual refresh.
 @MainActor @Observable
 final class AppModel {
     enum Status { case ok, loggedOut, apiBilling, failed(String) }
@@ -12,6 +13,8 @@ final class AppModel {
         let account: Account
         let config: ClaudeConfig
         let status: Status
+        /// As Claude Code reports it, else as its cached profile has it.
+        let plan: String?
         var id: String { account.id }
     }
 
@@ -29,6 +32,9 @@ final class AppModel {
     private var refreshing: Set<String> = []
     private var failures: [String: String] = [:]
     private var lastRun: [String: Date] = [:]
+    /// By Claude account uuid, so a different login on the same directory is asked anew.
+    private var plans: [String: String] = [:]
+    private var plansAsked: Set<String> = []
     private static let refreshInterval: TimeInterval = 60
 
     // MARK: Panel
@@ -51,12 +57,19 @@ final class AppModel {
         for row in due {
             refreshing.insert(row.id)
             lastRun[row.id] = .now
+            let uuid = row.config.identity?.uuid
+            let askPlan = uuid.map { force || !plansAsked.contains($0) } ?? false
+            if askPlan, let uuid { plansAsked.insert(uuid) }
             Task {
                 do {
                     try await UsageProbe.refresh(row.account, claude: claude)
                     failures[row.id] = nil
                 } catch {
                     failures[row.id] = error.localizedDescription
+                }
+                // After the quota, not beside it: one claude at a time per account.
+                if askPlan, let uuid, let plan = try? await AuthStatus.plan(row.account, claude: claude) {
+                    plans[uuid] = plan
                 }
                 refreshing.remove(row.id)
                 reload()
@@ -69,7 +82,8 @@ final class AppModel {
     func reload() {
         rows = store.accounts().map { account in
             let config = account.config()
-            return Row(account: account, config: config, status: status(of: account, config))
+            return Row(account: account, config: config, status: status(of: account, config),
+                       plan: config.identity.flatMap { plans[$0.uuid] ?? $0.plan })
         }
     }
 

@@ -24,7 +24,7 @@ struct AccountRow: View {
                 Text("未登录 · 运行 cl run \(row.account.id) 后 /login").font(.caption).foregroundStyle(.secondary)
             }
             Spacer()
-            if let plan = row.config.identity?.plan {
+            if let plan = row.plan {
                 Text(plan).font(.caption).foregroundStyle(.secondary)
             }
             actions

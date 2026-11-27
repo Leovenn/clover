@@ -125,6 +125,32 @@ struct Sandbox {
     }
 }
 
+@Suite struct SubprocessTests {
+    /// Quick commands, several at once, as `auth status` runs: each must come back.
+    @Test(.timeLimit(.minutes(1))) func returnsForCommandsThatExitAtOnce() async throws {
+        try await withThrowingTaskGroup(of: Int32.self) { group in
+            for _ in 0..<50 {
+                group.addTask { try await Subprocess.run(URL(filePath: "/usr/bin/true"), [], env: [:], timeout: .seconds(10)).status }
+            }
+            for try await status in group { #expect(status == 0) }
+        }
+    }
+}
+
+@Suite struct AuthStatusTests {
+    @Test func readsThePlanClaudeReports() {
+        let answer = #"{"loggedIn": true, "authMethod": "claude.ai", "email": "me@x.com", "subscriptionType": "pro"}"#
+        #expect(AuthStatus.plan(from: Data(answer.utf8)) == "Pro")
+    }
+
+    @Test func noPlanWhenClaudeDoesNotKnowIt() {
+        for answer in [#"{"loggedIn": true, "subscriptionType": null}"#, #"{"loggedIn": true}"#,
+                       #"{"subscriptionType": ""}"#, "Not logged in"] {
+            #expect(AuthStatus.plan(from: Data(answer.utf8)) == nil)
+        }
+    }
+}
+
 @Suite struct LaunchEnvironmentTests {
     @Test func stripsOverridesAndPointsAtTheAccount() {
         let base = ["PATH": "/bin", "ANTHROPIC_API_KEY": "k", "CLAUDE_CONFIG_DIR": "/elsewhere", "HTTPS_PROXY": "p"]
@@ -177,5 +203,11 @@ struct LiveTests {
 
         #expect(quota.fetchedAt > before)
         #expect(quota.fiveHour != nil && quota.sevenDay != nil)
+    }
+
+    @Test func asksClaudeForMainPlan() async throws {
+        let main = try #require(AccountStore().accounts().first { $0.isMain })
+        let claude = try #require(ClaudeBinary.find())
+        #expect(try await AuthStatus.plan(main, claude: claude) != nil)
     }
 }

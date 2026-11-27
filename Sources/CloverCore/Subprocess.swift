@@ -19,6 +19,10 @@ enum Subprocess {
         process.standardError = FileHandle.nullDevice
         let pipe = Pipe()
         process.standardOutput = pipe
+        // Not waitUntilExit: off the main thread it waits on a run loop that can miss the exit of
+        // a quick command, and then waits forever.
+        let exited = DispatchSemaphore(value: 0)
+        process.terminationHandler = { _ in exited.signal() }
         do { try process.run() } catch { throw CloverError("无法启动 \(executable.lastPathComponent)：\(error.localizedDescription)") }
 
         let running = Running(process)
@@ -32,7 +36,7 @@ enum Subprocess {
         let stdout = await withCheckedContinuation { done in
             DispatchQueue.global().async {
                 let data = pipe.fileHandleForReading.readDataToEndOfFile()
-                running.process.waitUntilExit()
+                exited.wait()
                 done.resume(returning: data)
             }
         }
